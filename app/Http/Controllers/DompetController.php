@@ -6,14 +6,15 @@ use App\Models\dompet;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 
 class DompetController extends Controller
 {
     public function __construct()
     {
-        // Middleware ini akan memeriksa role sebelum semua method dijalankan
-        $this->middleware('role:admin,bank')->only('allMutasi'); // Ganti dengan role yang diizinkan
+
+        $this->middleware('role:admin,bank')->only('allMutasi');
     }
     public function topup(Request $request)
     {
@@ -32,6 +33,7 @@ class DompetController extends Controller
         return redirect()->back()->with('status', 'Permintaan Top-Up anda sedang diproses');
     }
 
+
     public function withdraw(Request $request)
     {
         $request->validate([
@@ -47,67 +49,103 @@ class DompetController extends Controller
             return redirect()->back()->with('status', 'Saldo tidak mencukupi');
         }
 
-        // Menambahkan transaksi withdraw langsung
         Dompet::create([
             'user_id' => $user->id,
             'debit' => $request->credit,
             'credit' => 0,
             'description' => 'Withdraw Saldo',
-            'status' => 'done', // Status langsung 'done', tanpa persetujuan
+            'status' => 'process',
         ]);
 
         return redirect()->back()->with('status', 'Withdraw berhasil');
     }
 
-
-    public function transfer(Request $request)
+    public function bankTopupToSiswa(Request $request)
     {
-        $user = Auth::user(); // Mendapatkan user yang sedang login
-
-        // Validasi amount dan penerima
-        $validated = $request->validate([
-            'recepient_id' => 'required|exists:users,id', // Pastikan penerima ada di database
-            'amount' => 'required|numeric|min:1', // Pastikan amount lebih dari 0
+        $request->validate([
+            'siswa_id' => 'required|exists:users,id',
+            'amount' => 'required|numeric|min:10000',
         ]);
 
-        // Mendapatkan penerima
-        $recepient = User::find($request->recepient_id);
+        Dompet::create([
+            'user_id' => $request->siswa_id,
+            'credit' => $request->amount,
+            'debit' => 0,
+            'description' => 'Top-up oleh Bank',
+            'status' => 'done'
+        ]);
 
-        // Mengecek apakah pengirim memiliki saldo cukup
-        $dompets = Dompet::where('user_id', $user->id)->where('status', 'done')->get();
-        $credit = 0;
-        $debit = 0;
+        return redirect()->back()->with('success', 'Top-up berhasil dilakukan ke siswa.');
+    }
 
-        foreach ($dompets as $dompet) {
-            $credit += $dompet->credit;
-            $debit += $dompet->debit;
-        }
+    public function bankWithdrawFromSiswa(Request $request)
+    {
+        $request->validate([
+            'siswa_id' => 'required|exists:users,id',
+            'amount' => 'required|numeric|min:10000',
+        ]);
 
-        $saldoPengirim = $credit - $debit;
+        $totalSaldo = Dompet::where('user_id', $request->siswa_id)
+            ->where('status', 'done')
+            ->sum(DB::raw('credit - debit'));
 
-        if ($saldoPengirim < $request->amount) {
-            return redirect()->back()->with('error', 'Saldo Anda tidak cukup untuk melakukan transfer.');
+        if ($totalSaldo < $request->amount) {
+            return redirect()->back()->with('error', 'Saldo siswa tidak mencukupi.');
         }
 
         Dompet::create([
-            'user_id' => $user->id,
+            'user_id' => $request->siswa_id,
+            'credit' => 0,
+            'debit' => $request->amount,
+            'description' => 'Withdraw oleh Bank',
+            'status' => 'done'
+        ]);
+
+        return redirect()->back()->with('success', 'Withdraw berhasil dilakukan dari siswa.');
+    }
+
+
+
+    public function transfer(Request $request)
+    {
+        $request->validate([
+            'recepient_id' => 'required|exists:users,id',
+            'amount' => 'required|numeric|min:1',
+        ]);
+
+        $sender = Auth::user();
+        $recepient = User::find($request->recepient_id);
+
+
+        $saldo = Dompet::where('user_id', $sender->id)
+            ->where('status', 'done')
+            ->sum(DB::raw('credit - debit'));
+
+        if ($saldo < $request->amount) {
+            return redirect()->back()->with('error', 'Saldo pengirim tidak mencukupi.');
+        }
+
+
+        Dompet::create([
+            'user_id' => $sender->id,
             'credit' => 0,
             'debit' => $request->amount,
             'description' => 'Transfer ke ' . $recepient->name,
             'status' => 'done',
         ]);
 
-        // Kredit ke penerima
         Dompet::create([
             'user_id' => $recepient->id,
             'credit' => $request->amount,
             'debit' => 0,
-            'description' => 'Transfer dari ' . $user->name,
+            'description' => 'Transfer dari ' . $sender->name,
             'status' => 'done',
         ]);
 
-        return redirect()->route('home')->with('success', 'Transfer berhasil.');
+        return redirect()->back()->with('success', 'Transfer berhasil.');
     }
+
+
 
 
     public function acceptRequest(Request $request, $dompetId)
@@ -120,14 +158,12 @@ class DompetController extends Controller
 
     public function rejectRequest(Request $request, $dompetId)
     {
-        // Temukan wallet berdasarkan ID
+
         $dompet = Dompet::findOrFail($dompetId);
-
-        // Update status menjadi 'rejected'
         $dompet->status = 'rejected';
-        $dompet->save(); // Simpan perubahan status
+        $dompet->save(); 
 
-        // Redirect atau tampilkan notifikasi bahwa transaksi ditolak
+        
         return redirect()->back()->with('status', 'Permintaan Ditolak');
     }
 
@@ -136,10 +172,22 @@ class DompetController extends Controller
     {
         $mutasi = Dompet::with('user')
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate(10); 
 
         return view('wallet.all', compact('mutasi'));
     }
+
+    public function mutasi()
+    {
+        $user = Auth::user();
+        $mutasi = Dompet::where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->paginate(10); 
+
+        return view('siswa.mutasi', compact('mutasi'));
+    }
+
+   
 
     public function all(Request $request)
     {
@@ -154,16 +202,33 @@ class DompetController extends Controller
         } elseif ($filter === 'transfer') {
             $query->where('description', 'Transfer');
         } elseif ($filter === 'rejected') {
-            $query->where('status', 'rejected'); // Pastikan menambahkan filter untuk status 'rejected'
+            $query->where('status', 'rejected'); 
         }
 
-        // Menampilkan semua transaksi jika tidak ada filter atau filter 'all'
+       
         if ($filter === 'all' || !$filter) {
-            // Tidak ada filter yang diterapkan, tampilkan semua transaksi
+            
         }
 
         $mutasi = $query->orderBy('created_at', 'desc')->get();
 
         return view('wallet.all', compact('mutasi'));
+    }
+
+
+    public function exportPDF(Request $request, $userId = null)
+    {
+        $user = Auth::user();
+
+        if ($user->role === 'siswa') {
+            
+            $mutasi = Dompet::with('user')->where('user_id', $user->id)->get();
+        } else {
+           
+            $mutasi = Dompet::with('user')->get();
+        }
+
+        $pdf = Pdf::loadView('riwayat-transaksi-pdf', compact('mutasi'));
+        return $pdf->download('riwayat_transaksi.pdf');
     }
 }

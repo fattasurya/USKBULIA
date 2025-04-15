@@ -3,11 +3,11 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Semua Riwayat Transaksi</title>
+    <title>Riwayat Transaksi Saya</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-
     <style>
+       
         :root {
             --green-primary: #2e7d32;
             --green-light: #66bb6a;
@@ -100,6 +100,7 @@
         .debit-value {
             color: #198754;
         }
+
     </style>
 </head>
 
@@ -107,7 +108,7 @@
     <div class="container mt-5">
         <h4 class="mb-4">
             <i class="fas fa-history me-2"></i>
-            Semua Riwayat Transaksi
+            Riwayat Transaksi Saya
         </h4>
 
         @if($mutasi->isEmpty())
@@ -120,7 +121,6 @@
                 <table class="table">
                     <thead>
                         <tr>
-                            <th><i class="fas fa-user me-2"></i>User</th>
                             <th><i class="fas fa-calendar-alt me-2"></i>Tanggal</th>
                             <th><i class="fas fa-file-alt me-2"></i>Deskripsi</th>
                             <th><i class="fas fa-arrow-down me-2"></i>Tarik Tunai</th>
@@ -131,13 +131,14 @@
                     <tbody>
                         @foreach($mutasi as $item)
                             <tr>
-                                <td>{{ $item->user->name ?? 'Unknown' }}</td>
                                 <td>{{ $item->created_at->format('d M Y, H:i') }}</td>
                                 <td>{{ $item->description }}</td>
                                 <td class="debit-value">
-                                    {{ $item->debit > 0 ? 'Rp ' . number_format($item->debit, 0, ',', '.') : '-' }}</td>
+                                    {{ $item->debit > 0 ? 'Rp ' . number_format($item->debit, 0, ',', '.') : '-' }}
+                                </td>
                                 <td class="credit-value">
-                                    {{ $item->credit > 0 ? 'Rp ' . number_format($item->credit, 0, ',', '.') : '-' }}</td>
+                                    {{ $item->credit > 0 ? 'Rp ' . number_format($item->credit, 0, ',', '.') : '-' }}
+                                </td>
                                 <td>
                                     @if($item->status === 'done')
                                         <span class="badge bg-success">Selesai</span>
@@ -154,14 +155,10 @@
                     </tbody>
                 </table>
             </div>
-
-            
             <div class="d-flex justify-content-center mt-4">
                 {{ $mutasi->links('pagination::bootstrap-5') }}
             </div>
         @endif
-
-      
         <a href="{{ route('export.pdf') }}" class="btn btn-back mt-3 me-2">
             <i class="fas fa-file-pdf me-1"></i> Download PDF
         </a>
@@ -171,5 +168,4 @@
         </a>
     </div>
 </body>
-
 </html>

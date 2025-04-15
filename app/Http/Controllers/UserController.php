@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Dompet;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
@@ -12,6 +15,31 @@ class UserController extends Controller
     {
         return view('admin.add-user');
     }
+
+    public function getUserInfo($id)
+{
+    $user = User::find($id);
+
+    if (!$user) {
+        return response()->json(['exists' => false]);
+    }
+    
+    if ($user->role === 'admin' || $user->role === 'bank') {
+        return response()->json(['exists' => false, 'message' => 'User role not allowed']);
+    }
+
+    $saldo = Dompet::where('user_id', $user->id)
+        ->where('status', 'done')
+        ->select(DB::raw('SUM(credit - debit) as saldo'))
+        ->value('saldo') ?? 0;
+
+    return response()->json([
+        'exists' => true,
+        'name' => $user->name,
+        'role' => $user->role,
+        'saldo' => $saldo
+    ]);
+}
 
     public function store(Request $request)
     {
@@ -21,6 +49,11 @@ class UserController extends Controller
             'password' => 'required|confirmed|min:6',
             'role' => 'required|in:siswa,admin,bank',
         ]);
+
+        
+        if (Auth::user()->role === 'bank' && $request->role !== 'siswa') {
+            return redirect()->back()->with('status', 'Bank hanya boleh menambahkan role siswa.');
+        }
 
         $user = User::create([
             'name' => $request->name,
@@ -32,6 +65,7 @@ class UserController extends Controller
         if ($user) {
             return redirect()->route('home')->with('status', "Success Add User");
         }
+
         return redirect()->back()->with('status', "Failed Add User");
     }
 
@@ -53,7 +87,6 @@ class UserController extends Controller
             'email' => $request->email,
         ];
 
-        // Update password jika diisi
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
         }

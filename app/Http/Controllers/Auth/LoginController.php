@@ -10,10 +10,10 @@ class LoginController extends Controller
 {
     use AuthenticatesUsers;
 
-    // Arahkan ke halaman login yang sesuai
+    
     public function showLoginForm()
     {
-        return view('login');  // Arahkan ke resources/views/login.blade.php
+        return view('login');  
     }
 
     protected $redirectTo = '/home';
@@ -23,13 +23,12 @@ class LoginController extends Controller
         $this->middleware('guest')->except('logout');
     }
 
-    // Override logout method
     public function logout(Request $request)
     {
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         
-        return redirect('/');  // Redirect ke halaman login setelah logout
+        return redirect('/');  
     }
 }
