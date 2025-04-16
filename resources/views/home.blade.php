@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PayFlow</title>
@@ -260,7 +261,7 @@
                             <p class="text-muted">Tidak Ada Pengguna.</p>
                         @else
                             <div class="list-group">
-                                @foreach($users->take(5) as $user)
+                                @foreach($users->take(10000) as $user)
                                     <div class="list-group-item d-flex justify-content-between align-items-center">
                                         <div>
                                             <div>{{ $user->name }}</div>
@@ -469,12 +470,12 @@
                         <i class="fas fa-plus"></i> Tambah Siswa
                     </button>
                 </div>
-                <div class="card-body">
+                <div class="card-body" style="max-height: 300px; overflow-y: auto;">
                     @if($users->where('role', 'siswa')->isEmpty())
                         <p class="text-muted">Belum ada user.</p>
                     @else
                         <div class="list-group">
-                            @foreach($users->where('role', 'siswa')->take(5) as $user)
+                            @foreach($users->where('role', 'siswa') as $user)
                                 <div class="list-group-item d-flex justify-content-between align-items-center">
                                     <div>
                                         <div>{{ $user->name }}</div>
@@ -497,6 +498,7 @@
                         </div>
                     @endif
                 </div>
+
             </div>
         </div>
 
@@ -657,7 +659,7 @@
 
 
        
-        <div class="modal fade" id="addUserModal" tabindex="-1">
+        <div class="modal fade " id="addUserModal" tabindex="-1">
             <div class="modal-dialog">
                 <form method="POST" action="{{ route('user.store') }}">
                     @csrf
