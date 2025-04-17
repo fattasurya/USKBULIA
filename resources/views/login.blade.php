@@ -4,60 +4,77 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     * {
       box-sizing: border-box;
       padding: 0;
       margin: 0;
-      font-family: 'Poppins', sans-serif;
+      font-family: 'Roboto', sans-serif;
     }
 
     body {
-      height: 100vh;
-      background: linear-gradient(135deg, #014421, #a8e6a3);
+      min-height: 100vh;
+      background: linear-gradient(135deg, #e7f1ff, #f5f7fa);
       display: flex;
       justify-content: center;
       align-items: center;
+      color: #333;
+      overflow: hidden;
     }
 
     .login-container {
-      background-color: #fff;
-      border-radius: 25px;
-      padding: 50px 35px;
+      background: #fff;
+      border-radius: 12px;
+      padding: 40px 30px;
       width: 100%;
-      max-width: 420px;
-      box-shadow: 0 10px 35px rgba(1, 68, 33, 0.3);
-      position: relative;
+      max-width: 450px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    .login-container:hover {
+      box-shadow: 0 6px 25px rgba(0, 0, 0, 0.12);
+      transform: translateY(-2px);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .login-header {
       text-align: center;
-      margin-bottom: 30px;
-    }
-
-    .login-header h1 {
-      font-size: 28px;
-      color: #014421;
-      font-weight: 600;
-    }
-
-    .login-header p {
-      color: #555;
-      font-size: 14px;
-    }
-
-    .input-group {
       margin-bottom: 25px;
     }
 
+    .login-header h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #0056b3;
+      letter-spacing: 0.5px;
+    }
+
+    .login-header p {
+      font-size: 0.95rem;
+      font-weight: 300;
+      color: #6c757d;
+      margin-top: 5px;
+    }
+
+    .input-group {
+      margin-bottom: 20px;
+    }
+
     .input-group label {
-      font-size: 15px;
-      color: #222;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #333;
       margin-bottom: 8px;
       display: block;
-      font-weight: 500;
+      letter-spacing: 0.3px;
     }
 
     .input-field {
@@ -66,84 +83,98 @@
 
     .input-field input {
       width: 100%;
-      padding: 14px 16px;
-      border-radius: 14px;
-      border: 2px solid #e0e0e0;
-      font-size: 15px;
-      background-color: #f9fdf9;
-      transition: all 0.3s;
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: 1px solid #dfe6e9;
+      font-size: 0.9rem;
+      background: #fafafa;
+      color: #333;
+      transition: border-color 0.3s, box-shadow 0.3s, background 0.3s;
     }
 
     .input-field input:focus {
-      border-color: #2e7d32;
-      background-color: #fff;
+      border-color: #007bff;
+      background: #fff;
+      box-shadow: 0 0 8px rgba(0, 123, 255, 0.2);
       outline: none;
-      box-shadow: 0 0 0 4px rgba(46, 125, 50, 0.1);
     }
 
     .input-field input::placeholder {
-      color: #aaa;
+      color: #adb5bd;
+      font-weight: 300;
     }
 
     .toggle-password {
       position: absolute;
-      right: 16px;
+      right: 14px;
       top: 50%;
       transform: translateY(-50%);
       cursor: pointer;
-      color: #888;
+      color: #6c757d;
+      font-size: 1rem;
+      transition: color 0.3s;
     }
 
     .toggle-password:hover {
-      color: #2e7d32;
+      color: #007bff;
     }
 
     .submit-btn {
       width: 100%;
-      padding: 14px;
+      padding: 12px;
       border: none;
-      border-radius: 14px;
-      font-size: 16px;
-      font-weight: 600;
-      background: linear-gradient(to right, #2e7d32, #66bb6a);
-      color: white;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 500;
+      background: linear-gradient(to right, #007bff, #0056b3);
+      color: #fff;
       cursor: pointer;
-      transition: 0.3s;
-      box-shadow: 0 5px 15px rgba(46, 125, 50, 0.2);
+      transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
+      box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2);
     }
 
     .submit-btn:hover {
-      background: linear-gradient(to right, #1b5e20, #43a047);
+      background: linear-gradient(to right, #0056b3, #003d80);
       transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+    }
+
+    .submit-btn:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2);
     }
 
     .register-link {
       text-align: center;
       margin-top: 20px;
-      font-size: 14px;
-      color: #555;
+      font-size: 0.9rem;
+      font-weight: 400;
+      color: #6c757d;
     }
 
     .register-link a {
-      color: #2e7d32;
+      color: #007bff;
       text-decoration: none;
-      font-weight: 600;
+      font-weight: 500;
+      transition: color 0.3s;
     }
 
     .register-link a:hover {
+      color: #0056b3;
       text-decoration: underline;
     }
 
     .error-message {
-      font-size: 13px;
-      color: #d32f2f;
-      margin-top: 5px;
+      font-size: 0.85rem;
+      font-weight: 400;
+      color: #dc3545;
+      margin-top: 6px;
+      display: block;
+      letter-spacing: 0.2px;
     }
-
   </style>
 </head>
 <body>
-
   <div class="login-container">
     <div class="login-header">
       <h1>Masuk Akun</h1>
@@ -175,9 +206,7 @@
 
       <button type="submit" class="submit-btn">Masuk</button>
 
-    
-    </form>
-  </div>
+  
 
   <script>
     function togglePassword() {
@@ -194,6 +223,5 @@
       }
     }
   </script>
-
 </body>
 </html>
