@@ -97,7 +97,7 @@
         }
 
         .balance-panel {
-            background: #28a745;
+            background: linear-gradient(135deg, #001276, #69a9da);
             color: #fff;
             border-radius: 8px;
             padding: 20px;
@@ -323,6 +323,26 @@
     </nav>
 
     <div class="container-main">
+        <!-- Display Success and Error Messages -->
+        @if (session('status'))
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                {{ session('status') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+        @if (session('success'))
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                {{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+        @if (session('error'))
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                {{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
         <!-- Admin Dashboard -->
         @if(Auth::user()->role == 'admin')
         <h3 class="section-title">Admin Dashboard</h3>

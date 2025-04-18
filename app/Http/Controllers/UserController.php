@@ -63,10 +63,10 @@ class UserController extends Controller
         ]);
 
         if ($user) {
-            return redirect()->route('home')->with('status', "Success Add User");
+            return redirect()->route('home')->with('status', "Menambahkan user berhasil");
         }
 
-        return redirect()->back()->with('status', "Failed Add User");
+        return redirect()->back()->with('status', "Menambahkan user gagal");
     }
 
     public function edit(User $user)
@@ -94,10 +94,10 @@ class UserController extends Controller
         $updated = $user->update($data);
 
         if ($updated) {
-            return redirect()->route('home')->with("status", "Success Update User");
+            return redirect()->route('home')->with("status", "Update Berhasil");
         }
 
-        return redirect()->back()->with("status", "Failed Update User");
+        return redirect()->back()->with("status", "Update gagal");
     }
 
     public function destroy(User $user)
@@ -105,9 +105,9 @@ class UserController extends Controller
         $deleted = $user->delete();
 
         if ($deleted) {
-            return redirect()->route('home')->with("status", "Success Delete User");
+            return redirect()->route('home')->with("status", "Hapus user berhasil");
         }
 
-        return redirect()->back()->with("status", "Failed Delete User");
+        return redirect()->back()->with("status", "Hapus user gagal");
     }
 }
