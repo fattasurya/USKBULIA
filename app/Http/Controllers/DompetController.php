@@ -44,12 +44,11 @@ class DompetController extends Controller
             ->where('status', 'done')
             ->sum(DB::raw('credit - debit'));
 
-        // Check if balance is zero
+
         if ($totalSaldo == 0) {
             return redirect()->back()->with('error', 'Saldo Anda nol, tidak dapat melakukan Tarik Tunai.');
         }
 
-        // Check if balance is sufficient
         if ($totalSaldo < $request->credit) {
             return redirect()->back()->with('error', 'Saldo anda tidak mencukupi.');
         }
@@ -94,12 +93,12 @@ class DompetController extends Controller
             ->where('status', 'done')
             ->sum(DB::raw('credit - debit'));
 
-        // Check if balance is zero
+        
         if ($totalSaldo == 0) {
             return redirect()->back()->with('error', 'Saldo siswa nol, tidak dapat melakukan Tarik Tunai.');
         }
 
-        // Check if balance is sufficient (allow balance to become zero)
+        
         if ($totalSaldo < $request->amount) {
             return redirect()->back()->with('error', 'Saldo siswa tidak mencukupi.');
         }
@@ -125,7 +124,7 @@ class DompetController extends Controller
         $sender = Auth::user();
         $recepient = User::find($request->recepient_id);
 
-        // Prevent transfer to self
+      
         if ($sender->id == $request->recepient_id) {
             return redirect()->back()->with('error', 'Anda tidak dapat mentransfer ke akun sendiri.');
         }
@@ -134,12 +133,12 @@ class DompetController extends Controller
             ->where('status', 'done')
             ->sum(DB::raw('credit - debit'));
 
-        // Check if balance is zero
+        
         if ($saldo == 0) {
             return redirect()->back()->with('error', 'Saldo Anda nol, tidak dapat melakukan transfer.');
         }
 
-        // Check if balance is sufficient
+       
         if ($saldo < $request->amount) {
             return redirect()->back()->with('error', 'Saldo pengirim tidak mencukupi.');
         }
@@ -165,31 +164,34 @@ class DompetController extends Controller
 
     public function acceptRequest(Request $request, $dompetId)
     {
-        $dompet = Dompet::findOrFail($dompetId);
+        return DB::transaction(function () use ($dompetId) {
+            
+            $dompet = Dompet::lockForUpdate()->findOrFail($dompetId);
 
-        // Only process withdrawals (Top-up requests don't need balance checks)
-        if ($dompet->description === 'Withdraw Saldo') {
-            $totalSaldo = Dompet::where('user_id', $dompet->user_id)
-                ->where('status', 'done')
-                ->sum(DB::raw('credit - debit'));
+            if ($dompet->description === 'Tarik Tunai') {
+               
+                $totalSaldo = Dompet::where('user_id', $dompet->user_id)
+                    ->where('status', 'done')
+                    ->lockForUpdate()
+                    ->sum(DB::raw('credit - debit'));
 
-            // Check if balance is zero
-            if ($totalSaldo == 0) {
-                $dompet->update(['status' => 'rejected']);
-                return redirect()->back()->with('error', 'Permintaan ditolak karena saldo siswa 0.');
+                
+                $availableBalance = $totalSaldo;
+
+              
+                if ($availableBalance <= 0 || $availableBalance < $dompet->debit) {
+                    $dompet->update(['status' => 'rejected']);
+                    return redirect()->back()->with('error', 'Permintaan ditolak karena saldo siswa tidak mencukupi atau 0.');
+                }
             }
 
-            // Check if balance is sufficient (allow balance to become zero)
-            if ($totalSaldo < $dompet->debit) {
-                $dompet->update(['status' => 'rejected']);
-                return redirect()->back()->with('error', 'Permintaan ditolak karena saldo siswa tidak mencukupi.');
-            }
-        }
+            $dompet->update(['status' => 'done']);
 
-        $dompet->update(['status' => 'done']);
-
-        return redirect()->back()->with('status', 'Permintaan Berhasil disetujui');
+            return redirect()->back()->with('status', 'Permintaan berhasil disetujui.');
+        });
     }
+
+
 
     public function rejectRequest(Request $request, $dompetId)
     {
@@ -236,7 +238,7 @@ class DompetController extends Controller
         }
 
         if ($filter === 'all' || !$filter) {
-            // No additional filtering
+          
         }
 
         $mutasi = $query->orderBy('created_at', 'desc')->get();
@@ -249,12 +251,18 @@ class DompetController extends Controller
         $user = Auth::user();
 
         if ($user->role === 'siswa') {
+         
             $mutasi = Dompet::with('user')->where('user_id', $user->id)->get();
         } else {
-            $mutasi = Dompet::with('user')->get();
+           
+            if ($userId) {
+                $mutasi = Dompet::with('user')->where('user_id', $userId)->get();
+            } else {
+                $mutasi = Dompet::with('user')->get();
+            }
         }
 
         $pdf = Pdf::loadView('riwayat-transaksi-pdf', compact('mutasi'));
-        return $pdf->download('riwayat_transaksi.pdf');
+        return $pdf->download('riwayat_transaksi_' . ($userId ?: 'all') . '.pdf');
     }
 }
